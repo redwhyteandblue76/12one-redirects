@@ -9,12 +9,18 @@ function doGet(e) {
   if (!sheet) throw new Error('Missing Redirects tab');
   var rows = sheet.getDataRange().getValues();
   var redirects = Object.create(null);
+  var disabled = Object.create(null);
   for (var i = 1; i < rows.length; i++) {
     var slug = String(rows[i][0] || '').trim().toLowerCase();
     var dest = String(rows[i][1] || '').trim();
     var active = rows[i][2] === true || String(rows[i][2]).toLowerCase() === 'true';
-    if (!active || !/^[a-z0-9][a-z0-9_-]{0,79}$/.test(slug) || !/^https?:\/\//i.test(dest)) continue;
-    if (!Object.prototype.hasOwnProperty.call(redirects, slug)) redirects[slug] = dest;
+    if (!/^[a-z0-9][a-z0-9_-]{0,79}$/.test(slug)) continue;
+    if (Object.prototype.hasOwnProperty.call(redirects, slug) || Object.prototype.hasOwnProperty.call(disabled, slug)) continue;
+    if (!active) {
+      disabled[slug] = String(rows[i][4] || '').trim().slice(0, 1000);
+    } else if (/^https?:\/\//i.test(dest)) {
+      redirects[slug] = dest;
+    }
   }
-  return ContentService.createTextOutput(callback + '(' + JSON.stringify({ redirects: redirects }) + ');').setMimeType(ContentService.MimeType.JAVASCRIPT);
+  return ContentService.createTextOutput(callback + '(' + JSON.stringify({ redirects: redirects, disabled: disabled }) + ');').setMimeType(ContentService.MimeType.JAVASCRIPT);
 }
