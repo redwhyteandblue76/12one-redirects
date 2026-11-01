@@ -39,7 +39,16 @@ function fetchJsonp() {
     const data = await fetchJsonp();
     if (!data || !data.redirects || typeof data.redirects !== 'object') throw new Error('Invalid API response');
     const destination = data.redirects[slug];
-    if (typeof destination !== 'string') { show('Link not found', 'This link does not exist or is currently disabled.'); return; }
+    if (typeof destination !== 'string') {
+      const disabled = data.disabled && Object.prototype.hasOwnProperty.call(data.disabled, slug);
+      if (disabled) {
+        const customMessage = data.disabled[slug];
+        show('Link currently unavailable', typeof customMessage === 'string' && customMessage.trim() ? customMessage : 'This link is currently disabled.');
+      } else {
+        show('Link not found', 'This short link does not exist.');
+      }
+      return;
+    }
     const target = new URL(destination);
     if (target.protocol !== 'http:' && target.protocol !== 'https:') throw new Error('Unsafe URL');
     show('Redirecting…', 'Taking you to your destination.');
