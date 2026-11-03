@@ -1,1 +1,88 @@
-:root{color-scheme:dark;font-family:Montserrat,Inter,system-ui,-apple-system,sans-serif;background:#0d1a2c;color:#f7f8fc}*{box-sizing:border-box}body{min-height:100vh;margin:0;display:grid;place-items:center;padding:30px 18px;background:radial-gradient(ellipse at 80% 10%,#26374f,transparent 50%),#0d1a2c}.panel{width:min(100%,520px);text-align:center;border:1px solid #ffffff25;border-radius:22px;background:#18283cdd;padding:52px 36px 46px;box-shadow:0 22px 80px #0005}.brand{display:flex;align-items:center;justify-content:center;gap:15px}.brand strong{font-size:31px;letter-spacing:-2px}.brand strong span{color:#c69569}.brand small{border-left:1px solid #ffffff44;padding-left:15px;letter-spacing:3px;font-weight:750;color:#bdc9d5}.circle{height:58px;margin:39px auto 18px;display:grid;place-items:center}.spinner{width:34px;height:34px;border:3px solid #ffffff30;border-top-color:#c69569;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}h1{font-size:clamp(23px,5vw,30px);margin:0 0 13px}p{line-height:1.65;color:#c5cfdb;margin:0 auto 29px;max-width:360px}a{color:#e7c5a8;text-decoration:none;font-weight:700}a:hover{text-decoration:underline}footer{position:fixed;bottom:18px;color:#91a2b5;font-size:11px;letter-spacing:1px}@media(max-width:480px){.panel{padding:36px 20px}}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+/* 12one brand system — reds primary, teals secondary */
+:root {
+  color-scheme: light;
+  --ink: #001219;
+  --red: #9B2226;
+  --red-accent: #AE2012;
+  --rust: #BB3E03;
+  --caramel: #CA6702;
+  --gold: #EE9B00;
+  --vanilla: #E9D8A6;
+  --teal: #005F73;
+  --cyan: #0A9396;
+  --aqua: #94D2BD;
+  --paper: #FFFFFF;
+  --soft-paper: #FAF8F4;
+  font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--ink);
+  background: var(--red);
+}
+* { box-sizing: border-box; }
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 40px 18px 22px;
+  background: radial-gradient(ellipse at 85% 6%, #BB3E03 0%, transparent 48%),
+              linear-gradient(145deg, #9B2226 0%, #AE2012 55%, #711A21 100%);
+}
+.panel {
+  width: min(100%, 520px);
+  overflow: hidden;
+  text-align: center;
+  border: 1px solid #FFFFFF38;
+  border-radius: 22px;
+  background: var(--paper);
+  box-shadow: 0 24px 70px #00121945;
+  padding: 0 36px 43px;
+}
+.brand {
+  min-height: 121px;
+  margin: 0 -36px;
+  padding: 30px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--red);
+  color: #fff;
+}
+.brand strong { font-size: 34px; letter-spacing: -1.9px; font-weight: 800; line-height: 1; }
+.brand strong span { color: var(--vanilla); }
+.brand small {
+  border-left: 1px solid #FFFFFF70;
+  padding-left: 16px;
+  letter-spacing: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--vanilla);
+}
+.circle { min-height: 58px; margin: 30px auto 17px; display: grid; place-items: center; color: var(--teal); font-size: 34px; font-weight: 700; }
+.spinner {
+  width: 34px; height: 34px;
+  border: 3px solid #9B22262B;
+  border-top-color: var(--red-accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+h1 { font-size: clamp(22px, 5vw, 29px); font-weight: 800; line-height: 1.25; margin: 0 0 14px; color: var(--ink); }
+p { line-height: 1.7; color: #33474D; margin: 0 auto 27px; max-width: 380px; font-size: 14px; }
+a { color: var(--teal); text-decoration: underline; text-underline-offset: 3px; font-weight: 700; }
+a:hover { color: var(--red); }
+a:focus-visible { outline: 3px solid var(--cyan); outline-offset: 4px; border-radius: 2px; }
+footer { color: #FFF8EE; text-align: center; font-size: 11px; font-weight: 500; letter-spacing: .7px; line-height: 1.6; }
+@media (max-width: 480px) {
+  body { padding: 24px 14px 18px; }
+  .panel { padding: 0 21px 33px; border-radius: 18px; }
+  .brand { margin: 0 -21px; min-height: 108px; padding: 25px 16px; }
+  .brand strong { font-size: 31px; }
+  .brand small { letter-spacing: 2px; }
+}
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.5s; } }
