@@ -19,7 +19,7 @@ function requireAdmin_(){
  return email;
 }
 function onOpen(){SpreadsheetApp.getUi().createMenu('12one Redirects').addItem('Advanced editor','showRedirectSidebar').addItem('Set up feature tabs','setupRedirects').addToUi();}
-function setupRedirects(){requireAdmin_();table_(R12.SETTINGS,['Slug','SettingsJSON','UpdatedAt']);table_(R12.STATS,['DayUTC','Slug','Requests','Redirects','PasswordFailures','SourceCountsJSON']);table_(R12.HISTORY,['At','Slug','Editor','Action','BeforeJSON','AfterJSON']);return 'Ready. Existing redirects unchanged.';}
+function setupRedirects(){requireAdmin_();let props=PropertiesService.getScriptProperties();if(!props.getProperty('R12_PEPPER'))props.setProperty('R12_PEPPER',Utilities.getUuid()+Utilities.getUuid());table_(R12.SETTINGS,['Slug','SettingsJSON','UpdatedAt']);table_(R12.STATS,['DayUTC','Slug','Requests','Redirects','PasswordFailures','SourceCountsJSON']);table_(R12.HISTORY,['At','Slug','Editor','Action','BeforeJSON','AfterJSON']);return 'Ready. Existing redirects unchanged.';}
 function showRedirectSidebar(){requireAdmin_();SpreadsheetApp.getUi().showSidebar(HtmlService.createHtmlOutputFromFile('Editor').setTitle('12one • Editor'));}
 function links_(){
  let data=rows_('Redirects'),out={};if(!data.length)throw Error('Missing Redirects sheet');
