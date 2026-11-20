@@ -3,10 +3,18 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbx2XLJeq_BDcPy_l6IoXTtFqf8fLs1kKO77B_D9MbE6hjymfuCb5nMZbgpc2x56_Tz_/exec';
 const heading = document.getElementById('heading');
 const message = document.getElementById('message');
+const requestedUrl = document.getElementById('requested-url');
 function show(title, description) {
   heading.textContent = title;
   message.textContent = description;
+  requestedUrl.hidden = true;
+  requestedUrl.textContent = '';
   const circle=document.querySelector('.circle'); if(circle) circle.textContent='↗';
+}
+function showUnavailable(description = 'Check for typos or contact the person who provided this link.') {
+  show('Link unavailable', description);
+  requestedUrl.textContent = 'You entered: ' + location.href;
+  requestedUrl.hidden = false;
 }
 function slugFromPath() {
   let path;try{path=decodeURIComponent(location.pathname);}catch{return null;}
@@ -47,7 +55,7 @@ function countdown(destination,config){
 (async()=>{
  const slug=slugFromPath();
  if(slug===''){show('Short links, made simple.','This domain hosts 12one short links. Open a complete link to continue.');return;}
- if(slug===null){show('Invalid short link','Check the address and try again.');return;}
+ if(slug===null){showUnavailable();return;}
  try {
    const data=await fetchJsonp(slug);
    if(!data||typeof data!=='object')throw Error('Invalid API response');
@@ -56,9 +64,9 @@ function countdown(destination,config){
      const target=data.redirects[slug];
      if(typeof target==='string'){show('Redirecting…','Taking you to your destination.');location.replace(destinationUrl(target));return;}
      if(data.disabled&&Object.prototype.hasOwnProperty.call(data.disabled,slug)){
-       show('Link currently unavailable',data.disabled[slug]||'This link is currently disabled.');return;
+       showUnavailable('This link is currently disabled. Check with the person who provided it.');return;
      }
-     show('Link not found','This short link does not exist.');return;
+     showUnavailable();return;
    }
    switch(data.status){
      case 'redirect':countdown(destinationUrl(data.destination),data.countdown||{});return;
@@ -69,10 +77,10 @@ function countdown(destination,config){
        ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(k=>{if(params.has(k))gate.searchParams.set(k,params.get(k).slice(0,120));});
        show('Password required','Opening the protected link…');location.replace(gate.href);return;
      }
-     case 'disabled':show('Link currently unavailable',data.message||'This link is currently disabled.');return;
-     case 'unavailable':show('Link currently unavailable',data.message||'This link is not available.');return;
-     case 'missing':show('Link not found','This short link does not exist.');return;
+     case 'disabled':showUnavailable('This link is currently disabled. Check with the person who provided it.');return;
+     case 'unavailable':showUnavailable(data.message || 'This link is currently unavailable. Check with the person who provided it.');return;
+     case 'missing':showUnavailable();return;
      default:throw Error('Invalid redirect status');
    }
- }catch(error){console.error(error);show('Link unavailable','The destination could not be loaded. Try again shortly.');}
+ }catch(error){console.error(error);showUnavailable('The destination could not be loaded. Try again shortly.');}
 })();
