@@ -1,0 +1,47 @@
+<!doctype html><html><head><base target="_top"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+:root{font-family:Montserrat,Arial,sans-serif;color:#001219;background:#faf8f4}*{box-sizing:border-box}body{margin:0;padding:20px;max-width:900px;margin:auto}
+h1{font-size:24px}h2{font-size:16px;margin:16px 0 8px}.lead{color:#57676d;font-size:13px}
+.card{background:white;border:1px solid #e0ded9;border-radius:13px;padding:17px;margin:12px 0}label{display:block;font-size:12px;font-weight:700;margin:10px 0 4px}input:not([type=checkbox]),select,textarea{width:100%;font:inherit;font-size:13px;padding:10px;border:1px solid #bdc6c7;border-radius:8px;background:white}
+input[type=checkbox]{width:17px;height:17px}label.check{display:flex;gap:9px;align-items:center;font-size:13px}
+button{background:#9b2226;color:white;border:0;padding:12px 17px;border-radius:9px;cursor:pointer;font-weight:700}button:disabled{opacity:.5}button.secondary{background:#005f73}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+#status{white-space:pre-wrap;font-size:13px}small{color:#5b6c70}.hidden{display:none}
+</style></head><body>
+<h1>12one Redirect Editor</h1><p class="lead">Edit a redirect here or in the original Google Sheet. Save writes to the same spreadsheet. New slugs should be added in the Redirects tab first.</p>
+<div class="card"><label for="slug">Redirect</label><select id="slug" onchange="openLink()"></select><div id="status" role="status"></div></div>
+<div id="form" class="hidden">
+<div class="card"><h2>General</h2><label>Destination</label><input id="url" type="url"><label class="check"><input id="active" type="checkbox"> Enabled</label><label>Notes</label><textarea id="notes" rows="2"></textarea><label>Disabled message</label><textarea id="disabledMessage" rows="2"></textarea></div>
+<div class="card"><h2>Scheduled destinations</h2><label class="check"><input type="checkbox" id="scheduleEnabled"> Enable before/during/after redirects</label><div class="grid"><div><label>Start (ISO time with timezone, e.g. 2026-12-11T18:00:00-05:00)</label><input id="start"></div><div><label>End (ISO time with timezone)</label><input id="end"></div></div><label>Before URL</label><input id="beforeUrl"><label>During URL</label><input id="duringUrl"><label>After URL</label><input id="afterUrl"></div>
+<div class="card"><h2>Activation / expiration</h2><label class="check"><input id="availabilityEnabled" type="checkbox"> Enable availability window</label><div class="grid"><div><label>Opens at (ISO + timezone)</label><input id="opensAt"></div><div><label>Expires at (ISO + timezone)</label><input id="expiresAt"></div></div><label>Before message</label><input id="beforeMessage"><label>After message</label><input id="afterMessage"></div>
+<div class="card"><h2>Password</h2><label class="check"><input id="passwordEnabled" type="checkbox"> Require password before redirect</label><label>Set/change password (leave blank to preserve)</label><input id="password" type="password" autocomplete="new-password"><small>At least 12 characters. Passwords are not displayed in the editor or sheet.</small></div>
+<div class="card"><h2>Waiting page</h2><label class="check"><input id="countdownEnabled" type="checkbox"> Show countdown</label><label>Wait time (0–30 seconds)</label><input id="seconds" type="number" min="0" max="30" value="3"><label>Heading</label><input id="heading"><label>Message</label><input id="message"></div>
+<div class="card"><h2>Analytics and UTM</h2><label class="check"><input id="analyticsEnabled" type="checkbox"> Count redirects by day</label><label class="check"><input id="utmEnabled" type="checkbox"> Apply UTM parameters</label><div class="grid"><div><label>Source</label><input id="source"></div><div><label>Medium</label><input id="medium"></div><div><label>Campaign</label><input id="campaign"></div><div><label>Content</label><input id="content"></div><div><label>Term</label><input id="term"></div><div><label>Incoming UTM policy</label><select id="incomingPolicy"><option value="preserve">Preserve incoming</option><option value="replace">Prefer configured</option></select></div></div></div>
+<div class="card"><h2>Preview and history</h2><label>Simulate ISO date and time (+ timezone)</label><input id="previewDate" placeholder="2026-12-11T18:30:00-05:00"><button class="secondary" onclick="preview()">Test settings without saving</button><pre id="previewResult"></pre><button class="secondary" onclick="history()">Load edit history</button> <button class="secondary" onclick="stats()">Show analytics</button><pre id="statsResult" style="max-height:220px;overflow:auto;white-space:pre-wrap;font-size:11px"></pre><pre id="historyResult" style="max-height:260px;overflow:auto;white-space:pre-wrap;font-size:11px"></pre></div>
+<button id="save" onclick="save()">Save redirect</button>
+</div>
+<script>
+'use strict';
+let store={links:{},settings:{}};const el=id=>document.getElementById(id),v=id=>el(id).value,checked=id=>el(id).checked;
+function say(msg){el('status').textContent=msg}
+function fail(err){say('Error: '+(err.message||err));el('save').disabled=false}
+function load(){say('Loading redirects…');google.script.run.withSuccessHandler(data=>{store=data;let slugs=Object.keys(data.links).sort();el('slug').innerHTML='';slugs.forEach(s=>{let o=document.createElement('option');o.value=s;o.textContent='/'+s;el('slug').append(o)});el('form').classList.toggle('hidden',!slugs.length);if(slugs.length)openLink();else say('No redirects in the Redirects tab.');}).withFailureHandler(fail).adminList();}
+function set(id,value){if(el(id).type==='checkbox')el(id).checked=!!value;else el(id).value=value===null||value===undefined?'':value;}
+function openLink(){let slug=v('slug'),l=store.links[slug],s=store.settings[slug]||{},t=s.schedule||{},a=s.availability||{},p=s.password||{},c=s.countdown||{},u=s.utm||{};
+ set('url',l.url);set('active',l.active);set('notes',l.notes);set('disabledMessage',l.disabledMessage);
+ ['start','end','beforeUrl','duringUrl','afterUrl'].forEach(k=>set(k,t[k]));set('scheduleEnabled',t.enabled);
+ ['opensAt','expiresAt','beforeMessage','afterMessage'].forEach(k=>set(k,a[k]));set('availabilityEnabled',a.enabled);
+ set('passwordEnabled',p.enabled);set('password','');set('countdownEnabled',c.enabled);set('seconds',c.seconds===undefined?3:c.seconds);set('heading',c.heading||'Redirecting…');set('message',c.message||'Taking you to your destination.');
+ set('analyticsEnabled',(s.analytics||{}).enabled);set('utmEnabled',u.enabled);['source','medium','campaign','content','term'].forEach(k=>set(k,u[k]));set('incomingPolicy',u.incomingPolicy||'preserve');
+ el('previewResult').textContent='';el('historyResult').textContent='';say('Editing /'+slug);
+}
+function config(){let props=(ks)=>Object.fromEntries(ks.map(k=>[k,v(k)]));return {
+ schedule:{enabled:checked('scheduleEnabled'),...props(['start','end','beforeUrl','duringUrl','afterUrl'])},
+ availability:{enabled:checked('availabilityEnabled'),...props(['opensAt','expiresAt','beforeMessage','afterMessage'])},
+ password:{enabled:checked('passwordEnabled')},countdown:{enabled:checked('countdownEnabled'),seconds:Number(v('seconds')),heading:v('heading'),message:v('message')},
+ analytics:{enabled:checked('analyticsEnabled')},utm:{enabled:checked('utmEnabled'),incomingPolicy:v('incomingPolicy'),...props(['source','medium','campaign','content','term'])}};}
+function save(){el('save').disabled=true;say('Saving…');let slug=v('slug');google.script.run.withSuccessHandler(()=>{say('Saved successfully.');el('save').disabled=false;load();}).withFailureHandler(fail).adminSave(slug,config(),v('url'),checked('active'),v('notes'),v('disabledMessage'),v('password'));}
+function preview(){el('previewResult').textContent='Testing…';google.script.run.withSuccessHandler(r=>el('previewResult').textContent=JSON.stringify(r,null,2)).withFailureHandler(e=>el('previewResult').textContent=e.message).adminPreview(v('slug'),v('previewDate'),config());}
+function stats(){google.script.run.withSuccessHandler(rows=>{let slug=v('slug'),found=rows.slice(1).filter(r=>String(r[1])===slug);el('statsResult').textContent=found.length?found.map(r=>r[0]+': '+r[3]+' redirects, '+r[4]+' password failures, sources '+r[5]).join('\n'):'No analytics recorded yet.';}).withFailureHandler(e=>el('statsResult').textContent=e.message).adminStats();}
+function history(){google.script.run.withSuccessHandler(r=>el('historyResult').textContent=JSON.stringify(r,null,2)).withFailureHandler(e=>el('historyResult').textContent=e.message).adminHistory(v('slug'));}
+load();
+</script></body></html>
