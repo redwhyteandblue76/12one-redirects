@@ -150,6 +150,7 @@ function adminSave(slug,settings,url,active,notes,disabledMessage,password){
 // Password submission must be through the GAS HTML gate; never send passwords in a URL.
 function passwordGate(slug,password,utm){
  slug=slug_(slug);password=String(password||'');if(password.length>128)throw Error('Invalid password');
+ let succeeded=false,failed=false,result;
  let lock=LockService.getScriptLock();lock.waitLock(10000);
  try{
  let cache=CacheService.getScriptCache(),key='gate-attempts:'+slug,attempts=Number(cache.get(key)||0);
@@ -158,12 +159,14 @@ function passwordGate(slug,password,utm){
  if(decision.status!=='protected')throw Error('Link is unavailable.');
  let raw=PropertiesService.getScriptProperties().getProperty('R12_PW_'+slug)||'',parts=raw.split('.');
  let correct=parts.length===2&&equal_(pwHash_(slug,password,parts[0]),parts[1]);
- if(!correct){cache.put(key,String(attempts+1),600);stats_(slug,'fail','');throw Error('Incorrect password.');}
+ if(!correct){cache.put(key,String(attempts+1),600);failed=true;throw Error('Incorrect password.');}
  cache.remove(key);
  let target=resolve_(links[slug],config,Date.now(),true);
  let params={};if(utm&&typeof utm==='object')Object.keys(utm).forEach(k=>{if(/^utm_(source|medium|campaign|content|term)$/.test(k))params[k]=String(utm[k]).slice(0,120);});
  if(target.status!=='redirect')throw Error('Link is unavailable.');
- if(config.analytics&&config.analytics.enabled)stats_(slug,'redirect',params.utm_source||'');
- return {destination:queryUtm_(target.destination,target.utm,params),countdown:target.countdown};
+ succeeded=!!(config.analytics&&config.analytics.enabled);
+ result={destination:queryUtm_(target.destination,target.utm,params),countdown:target.countdown,source:params.utm_source||''};
  }finally{lock.releaseLock();}
+ if(succeeded)stats_(slug,'redirect',result.source);
+ return {destination:result.destination,countdown:result.countdown};
 }
