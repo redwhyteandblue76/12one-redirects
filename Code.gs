@@ -114,7 +114,7 @@ function stats_(slug,kind,source){
 function adminList(){requireAdmin_();return {links:links_(),settings:configs_()};}
 function adminHistory(slug){requireAdmin_();slug=slug_(slug);return rows_(R12.HISTORY).slice(1).filter(r=>String(r[1])===slug).slice(-50).reverse();}
 function adminStats(){requireAdmin_();return rows_(R12.STATS).slice(-500);}
-function adminPreview(slug,iso,settings){requireAdmin_();return resolve_(links_()[slug_(slug)],validate_(settings),date_(iso));}
+function adminPreview(slug,iso,settings){requireAdmin_();let n=date_(iso);if(n===null)throw Error('Enter a preview date and time.');return resolve_(links_()[slug_(slug)],validate_(settings),n);}
 function pwHash_(slug,password,salt){
  let pepper=PropertiesService.getScriptProperties().getProperty('R12_PEPPER');
  if(!pepper)throw Error('Password storage is not initialized. Run setupRedirects.');
@@ -169,4 +169,21 @@ function passwordGate(slug,password,utm){
  }finally{lock.releaseLock();}
  if(succeeded)stats_(slug,'redirect',result.source);
  return {destination:result.destination,countdown:result.countdown};
+}
+
+// Simple edit trigger: capture direct sheet edits without changing any redirect cells.
+// Bulk edits may not supply old values; snapshots in editor are more complete.
+function onEdit(e){
+ try{
+  if(!e||!e.range)return;let sh=e.range.getSheet(),name=sh.getName();
+  if(name!== 'Redirects'&&name!==R12.SETTINGS)return;
+  let first=e.range.getRow(),last=e.range.getLastRow();if(last<2)return;
+  let history=table_(R12.HISTORY,['At','Slug','Editor','Action','BeforeJSON','AfterJSON']);
+  for(let row=Math.max(2,first);row<=Math.min(last,first+49);row++){
+   let slug=String(sh.getRange(row,1).getValue()||'').trim().toLowerCase();if(!R12.SLUG.test(slug))continue;
+   history.appendRow([new Date(),slug,Session.getActiveUser().getEmail()||'sheet editor',
+    'sheet_edit',JSON.stringify({oldValue:e.oldValue===undefined?null:e.oldValue}),
+    JSON.stringify({sheet:name,range:e.range.getA1Notation(),row:sh.getRange(row,1,1,Math.min(5,sh.getLastColumn())).getDisplayValues()[0]})]);
+  }
+ }catch(ignore){}
 }
