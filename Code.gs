@@ -150,7 +150,7 @@ function adminSave(slug,settings,url,active,notes,disabledMessage,password){
 // Password submission must be through the GAS HTML gate; never send passwords in a URL.
 function passwordGate(slug,password,utm){
  slug=slug_(slug);password=String(password||'');if(password.length>128)throw Error('Invalid password');
- let succeeded=false,failed=false,result;
+ let succeeded=false,failed=false,result,gateError;
  let lock=LockService.getScriptLock();lock.waitLock(10000);
  try{
  let cache=CacheService.getScriptCache(),key='gate-attempts:'+slug,attempts=Number(cache.get(key)||0);
@@ -166,7 +166,9 @@ function passwordGate(slug,password,utm){
  if(target.status!=='redirect')throw Error('Link is unavailable.');
  succeeded=!!(config.analytics&&config.analytics.enabled);
  result={destination:queryUtm_(target.destination,target.utm,params),countdown:target.countdown,source:params.utm_source||''};
- }finally{lock.releaseLock();}
+ }catch(ex){gateError=ex;}finally{lock.releaseLock();}
+ if(failed)stats_(slug,'fail','');
+ if(gateError)throw gateError;
  if(succeeded)stats_(slug,'redirect',result.source);
  return {destination:result.destination,countdown:result.countdown};
 }
