@@ -1,0 +1,24 @@
+<!doctype html><html><head><base target="_top"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+body{font-family:Montserrat,Arial,sans-serif;background:linear-gradient(140deg,#9b2226,#711a21);display:grid;place-items:center;min-height:100vh;margin:0;padding:15px;color:#001219}
+main{background:white;border-radius:20px;padding:35px;width:min(100%,420px);box-sizing:border-box;text-align:center;box-shadow:0 22px 55px #00121945}
+h1{font-size:23px}input{padding:13px;border:1px solid #aaa;border-radius:8px;width:100%;box-sizing:border-box;font-size:16px}
+button{background:#9b2226;color:white;border:0;border-radius:8px;padding:13px;width:100%;margin-top:12px;font-weight:700;cursor:pointer}p{color:#47595c;font-size:14px}a{color:#005f73}#error{color:#9b2226}
+</style></head><body><main><h2>12<span style="color:#ae2012">one</span></h2><h1>Protected link</h1><p>Enter the password to continue to /<?= linkSlug ?>.</p>
+<form id="gate"><input id="password" type="password" autocomplete="current-password" placeholder="Password" required><button id="submit">Continue</button></form><p id="error" role="status"></p><p><a href="https://12one.page">Return to 12one.page</a></p></main>
+<script>
+const slug=<?= JSON.stringify(linkSlug) ?>;
+const params=Object.fromEntries(new URLSearchParams(location.search));
+document.getElementById('gate').addEventListener('submit',e=>{
+ e.preventDefault();let button=document.getElementById('submit');button.disabled=true;
+ document.getElementById('error').textContent='';
+ google.script.run.withSuccessHandler(data=>{
+ let url=new URL(data.destination);if(!['https:','http:'].includes(url.protocol))throw Error('Invalid destination');
+ let c=data.countdown||{},secs=c.enabled?Math.min(30,Math.max(0,Number(c.seconds)||0)):0;
+ const heading=document.querySelector('h1');heading.textContent=c.enabled?(c.heading||'Redirecting…'):'Redirecting…';
+ if(!secs){location.replace(url.href);return;}
+ const m=document.getElementById('error');m.style.color='#005f73';let left=secs;
+ m.textContent=(c.message||'Taking you to your destination.')+' '+left+'s';
+ let timer=setInterval(()=>{left--;m.textContent=(c.message||'Taking you to your destination.')+' '+left+'s';if(left<=0){clearInterval(timer);location.replace(url.href)}},1000);
+ }).withFailureHandler(err=>{button.disabled=false;document.getElementById('error').textContent=err.message||String(err)}).passwordGate(slug,document.getElementById('password').value,params);
+});
+</script></body></html>
